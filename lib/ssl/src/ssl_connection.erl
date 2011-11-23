@@ -973,10 +973,13 @@ handle_info({ErrorTag, Socket, econnaborted}, StateName,
 
 handle_info({ErrorTag, Socket, Reason}, _,  
 	    #state{socket = Socket, from = User, 
+		   socket_options = Opts,
+		   user_application = {_Mon, Pid},
 		   role = Role, error_tag = ErrorTag} = State)  ->
-    Report = io_lib:format("SSL: Socket error: ~p ~n", [Reason]),
+    Report = lists:flatten(io_lib:format("SSL: Socket error: ~p ~n", [Reason])),
     error_logger:info_report(Report),
-    alert_user(User,  ?ALERT_REC(?FATAL, ?CLOSE_NOTIFY), Role),
+    alert_user(Opts#socket_options.active, Pid, User,
+	       ?ALERT_REC(?FATAL, ?CLOSE_NOTIFY), Role),
     {stop, normal, State};
 
 handle_info({'DOWN', MonitorRef, _, _, _}, _, 
